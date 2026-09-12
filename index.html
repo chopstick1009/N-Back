@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title></title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* 全局宋体/新宋体 */
+    body { font-family: 'NSimSun', 'SimSun', 'STSong', serif; }
+    
+    /* 基础网格样式 - 苹果 Dark Mode 卡片色 */
+    .grid-cell {
+      transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+      background-color: #1C1C1E; 
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    
+    /* 动态颜色类 (Apple HIG Dark Mode Colors) + 保留发光效果 - 低饱和度化 */
+    .active-orange { background-color: #D9823A !important; box-shadow: 0 0 24px rgba(217, 130, 58, 0.40); transform: scale(1.05); border-color: #D9823A !important; }
+    .active-green { background-color: #6BBA75 !important; box-shadow: 0 0 24px rgba(107, 186, 117, 0.4); transform: scale(1.05); border-color: #6BBA75 !important; }
+    .active-blue { background-color: #5B88D1 !important; box-shadow: 0 0 24px rgba(91, 136, 209, 0.4); transform: scale(1.05); border-color: #5B88D1 !important; }
+    .active-yellow { background-color: #CDB95A !important; box-shadow: 0 0 24px rgba(216, 184, 74, 0.34); transform: scale(1.05); border-color: #CDB95A !important; }
+    .active-purple { background-color: #A470C4 !important; box-shadow: 0 0 24px rgba(164, 112, 196, 0.4); transform: scale(1.05); border-color: #A470C4 !important; }
+    .active-red { background-color: #C95757 !important; box-shadow: 0 0 26px rgba(217, 67, 67, 0.52); transform: scale(1.05); border-color: #D94343 !important; }
+    .active-cyan { background-color: #4cb5ae !important; box-shadow: 0 0 24px rgba(76, 181, 174, 0.4); transform: scale(1.05); border-color: #4CB5AE !important; }
+    .active-pink { background-color: #D176A3 !important; box-shadow: 0 0 24px rgba(209, 118, 163, 0.4); transform: scale(1.05); border-color: #D176A3 !important; }
+    .active-white { background-color: #D4D4D6 !important; box-shadow: 0 0 24px rgba(212, 212, 214, 0.4); transform: scale(1.05); border-color: #D4D4D6 !important; }
+
+    /* 按钮按下反馈 - 更加干脆的动画 (缩放 + 变亮) */
+    @keyframes btn-click {
+      0% { transform: scale(1); filter: brightness(1); }
+      40% { transform: scale(0.9); filter: brightness(1.5); }
+      100% { transform: scale(1); filter: brightness(1); }
+    }
+    .animate-click {
+      animation: btn-click 0.15s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    
+    /* 隐藏数字输入框的默认箭头 */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+    
+    /* 隐藏滚动条 */
+    ::-webkit-scrollbar { display: none; }
+    
+    /* 轮盘选择器专用样式 */
+    .wheel-hide-scrollbar::-webkit-scrollbar { display: none; }
+    .wheel-hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .mask-fade { 
+      mask-image: linear-gradient(to bottom, transparent, black 33%, black 66%, transparent); 
+      -webkit-mask-image: linear-gradient(to bottom, transparent, black 33%, black 66%, transparent); 
+    }
+  </style>
+</head>
+<body class="bg-black text-white min-h-screen flex items-center justify-center antialiased selection:bg-blue-500/30 overflow-hidden">
+
+  <!-- 状态 A：开始界面 (Start Menu) -->
+  <div id="start-screen" class="flex flex-col items-center max-w-md w-full p-10 bg-[#1C1C1E]/80 rounded-[32px] border border-white/[0.08] shadow-2xl backdrop-blur-2xl">
+    <!-- 极简 Musk 风格 Logo (流线型、粗细线条、倾斜、切口) -->
+    <div class="w-16 h-16 mb-6 flex items-center justify-center">
+      <svg class="w-14 h-14 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]" viewBox="0 0 24 24" fill="currentColor">
+        <defs>
+          <mask id="stencil-cut">
+            <rect x="0" y="0" width="24" height="24" fill="white" />
+            <rect x="0" y="11.5" width="24" height="1.5" fill="black" />
+          </mask>
+        </defs>
+        <g mask="url(#stencil-cut)">
+          <polygon points="1,20 6,4 8,4 3,20" />
+          <polygon points="17,20 22,4 24,4 19,20" />
+          <polygon points="6,4 14,4 19,20 11,20" />
+        </g>
+      </svg>
+    </div>
+    
+    <h1 class="text-3xl font-semibold mb-8 text-white text-center tracking-tight">N-Back</h1>
+    
+    <div id="settings-buttons" class="w-full flex justify-around items-center mb-10 relative z-50 h-[56px] px-2">
+      <div class="flex items-center justify-center h-[56px]">
+        <div id="scroll-nback" class="h-[56px] w-4 sm:w-5 overflow-y-auto flex flex-col wheel-hide-scrollbar select-none box-border snap-y snap-mandatory overscroll-y-contain"></div>
+        <div class="h-[56px] flex items-center text-base sm:text-lg font-semibold text-white ml-1 pointer-events-none tracking-wide">-Back</div>
+      </div>
+      <div class="flex items-center justify-center h-[56px]">
+        <div id="scroll-grid" class="h-[56px] w-12 sm:w-14 overflow-y-auto flex flex-col wheel-hide-scrollbar select-none box-border snap-y snap-mandatory overscroll-y-contain"></div>
+      </div>
+      <div class="flex items-center justify-center h-[56px]">
+        <div id="scroll-rounds" class="h-[56px] w-7 sm:w-9 overflow-y-auto flex flex-col wheel-hide-scrollbar select-none box-border snap-y snap-mandatory overscroll-y-contain"></div>
+        <div class="h-[56px] flex items-center text-base sm:text-lg font-semibold text-white ml-1 pointer-events-none tracking-wide">回合</div>
+      </div>
+    </div>
+    
+    <button id="start-btn" class="w-1/4 min-w-[120px] bg-white text-black font-semibold text-lg py-4 rounded-2xl focus:outline-none select-none hover:bg-white/90 active:scale-[0.98] transition-all">开始</button>
+  </div>
+
+  <div id="game-screen" class="hidden flex-col items-center w-full max-w-lg p-6">
+    <div class="w-full flex justify-between items-center mb-10 px-2">
+      <div class="text-2xl font-semibold tracking-tight text-white"><span id="current-n-display">2</span>-Back</div>
+      <div class="bg-[#2C2C2E] px-4 py-1.5 rounded-full text-sm font-medium text-white/70">剩余 <span id="rounds-left" class="text-white font-semibold ml-1">20</span></div>
+    </div>
+    <div id="grid-container" class="grid mb-10 mx-auto w-full max-w-[320px] sm:max-w-[400px] aspect-square"></div>
+    <div class="flex w-full gap-4 justify-center">
+      <button id="match-pos-btn" class="flex-1 max-w-[160px] bg-[#1C1C1E] border border-white/[0.08] text-white py-5 rounded-[24px] flex flex-col items-center focus:outline-none select-none touch-manipulation"><span class="text-lg font-medium">位置匹配</span></button>
+      <button id="match-col-btn" class="flex-1 max-w-[160px] bg-[#1C1C1E] border border-white/[0.08] text-white py-5 rounded-[24px] flex flex-col items-center focus:outline-none select-none touch-manipulation"><span class="text-lg font-medium">颜色匹配</span></button>
+    </div>
+  </div>
+
+  <div id="result-screen" class="hidden flex-col items-center max-w-md w-full p-8 bg-[#1C1C1E]/80 rounded-[32px] border border-white/[0.08] shadow-2xl backdrop-blur-2xl">
+    <div class="flex items-center justify-center gap-4 text-5xl font-bold mb-10 text-white tracking-tight"><span id="res-n-back"></span><span>-</span><span id="res-grid"></span><span>-</span><span id="res-rounds"></span></div>
+    <div class="w-full space-y-4 mb-8">
+      <div class="bg-[#2C2C2E] p-5 rounded-2xl border border-white/[0.04]"><h3 class="text-white/40 font-medium mb-4 text-xs tracking-widest uppercase">位置匹配</h3><div class="grid grid-cols-3 gap-2 text-center"><div><div class="text-white/30 text-xs mb-1">正确</div><div id="res-pos-hits" class="text-2xl font-semibold text-white">0</div></div><div><div class="text-white/30 text-xs mb-1">漏按</div><div id="res-pos-misses" class="text-2xl font-semibold text-white/50">0</div></div><div><div class="text-white/30 text-xs mb-1">误按</div><div id="res-pos-fa" class="text-2xl font-semibold text-white/50">0</div></div></div></div>
+      <div class="bg-[#2C2C2E] p-5 rounded-2xl border border-white/[0.04]"><h3 class="text-white/40 font-medium mb-4 text-xs tracking-widest uppercase">颜色匹配</h3><div class="grid grid-cols-3 gap-2 text-center"><div><div class="text-white/30 text-xs mb-1">正确</div><div id="res-col-hits" class="text-2xl font-semibold text-white">0</div></div><div><div class="text-white/30 text-xs mb-1">漏按</div><div id="res-col-misses" class="text-2xl font-semibold text-white/50">0</div></div><div><div class="text-white/30 text-xs mb-1">误按</div><div id="res-col-fa" class="text-2xl font-semibold text-white/50">0</div></div></div></div>
+      <div class="flex justify-between items-center p-6 bg-[#2C2C2E] rounded-2xl border border-white/[0.08] mt-2"><span class="text-white/50 font-medium tracking-widest uppercase text-sm">综合准确率</span><span id="res-accuracy" class="text-4xl font-semibold text-white tracking-tight">0%</span></div>
+    </div>
+    <div class="flex gap-4 w-full"><button id="review-btn" class="flex-1 bg-[#2C2C2E] text-white font-semibold text-lg py-4 rounded-2xl focus:outline-none select-none">复盘</button><button id="restart-btn" class="flex-1 bg-white text-black font-semibold text-lg py-4 rounded-2xl focus:outline-none select-none">完成</button></div>
+  </div>
+
+  <div id="review-screen" class="hidden flex-col w-full max-w-md h-[80vh] bg-[#1C1C1E]/90 rounded-[32px] border border-white/[0.08] shadow-2xl backdrop-blur-2xl overflow-hidden">
+    <div class="flex justify-between items-center p-6 border-b border-white/[0.04] shrink-0"><h2 class="text-xl font-semibold text-white tracking-tight">复盘</h2><div class="flex items-center gap-2"><button id="prev-error-btn" class="hidden bg-[#2C2C2E] hover:bg-[#3C3C3E] text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors focus:outline-none">上一失误</button><button id="next-error-btn" class="hidden bg-[#2C2C2E] hover:bg-[#3C3C3E] text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors focus:outline-none">下一失误</button><button id="close-review-btn" class="text-white/50 hover:text-white px-3 py-1.5 font-medium text-sm transition-colors focus:outline-none select-none ml-2">关闭</button></div></div>
+    <div id="review-list" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+  </div>
+
+  <script>
+    const COLORS = ['red', 'green', 'blue', 'yellow', 'purple', 'orange', 'cyan', 'pink', 'white'];
+    const state = { nBack: 2, gridSize: 3, totalRounds: 20, currentRound: 0, sequence: [], posHits: 0, posMisses: 0, posFalseAlarms: 0, posTargets: 0, colHits: 0, colMisses: 0, colFalseAlarms: 0, colTargets: 0, isPlaying: false, roundStartTime: 0, rafId: null, posRespondedThisRound: false, colRespondedThisRound: false, showDuration: 500, blankDuration: 3000 };
+    const screens = { start: document.getElementById('start-screen'), game: document.getElementById('game-screen'), result: document.getElementById('result-screen'), review: document.getElementById('review-screen') };
+    let selectedN = 2, selectedGrid = 4, selectedRounds = 40;
+    function initInlineWheel(containerId, options, defaultIndex, onSelect) { const scrollEl = document.getElementById(containerId); scrollEl.innerHTML = ''; const itemHeight = 56; const items = []; options.forEach((opt) => { const div = document.createElement('div'); div.className = 'wheel-item-real flex-shrink-0 box-border h-[56px] w-full flex items-center justify-center text-base sm:text-lg font-semibold text-white/50 transition-colors duration-200 snap-center'; div.textContent = opt.label; div.dataset.val = opt.value; scrollEl.appendChild(div); items.push(div); }); let lastActiveIndex = -1; let ticking = false; const updateVisuals = () => { const index = Math.round(scrollEl.scrollTop / itemHeight); if (index !== lastActiveIndex) { lastActiveIndex = index; items.forEach((item, i) => { if (i === index) { item.classList.add('text-white'); item.classList.remove('text-white/50'); } else { item.classList.remove('text-white'); item.classList.add('text-white/50'); } }); if (items[index]) onSelect(items[index].dataset.val); } ticking = false; }; scrollEl.addEventListener('scroll', () => { if (!ticking) { window.requestAnimationFrame(updateVisuals); ticking = true; } }, { passive: true }); setTimeout(() => { scrollEl.scrollTo({ top: defaultIndex * itemHeight }); updateVisuals(); }, 10); }
+    const nBackOptions = Array.from({length: 6}, (_, i) => ({ label: `${i+2}`, value: i+2 }));
+    const gridOptions = Array.from({length: 7}, (_, i) => ({ label: `${i+3} × ${i+3}`, value: i+3 }));
+    const roundsOptions = Array.from({length: 10}, (_, i) => ({ label: `${(i+1)*10}`, value: (i+1)*10 }));
+    initInlineWheel('scroll-nback', nBackOptions, 0, val => selectedN = parseInt(val, 10));
+    initInlineWheel('scroll-grid', gridOptions, 1, val => selectedGrid = parseInt(val, 10));
+    initInlineWheel('scroll-rounds', roundsOptions, 3, val => selectedRounds = parseInt(val, 10));
+    const currentNDisplay = document.getElementById('current-n-display'); const roundsLeftDisplay = document.getElementById('rounds-left'); const gridContainer = document.getElementById('grid-container'); let cells = []; const matchPosBtn = document.getElementById('match-pos-btn'); const matchColBtn = document.getElementById('match-col-btn');
+    const resNBack = document.getElementById('res-n-back'); const resGrid = document.getElementById('res-grid'); const resRounds = document.getElementById('res-rounds'); const resPosHits = document.getElementById('res-pos-hits'); const resPosMisses = document.getElementById('res-pos-misses'); const resPosFa = document.getElementById('res-pos-fa'); const resColHits = document.getElementById('res-col-hits'); const resColMisses = document.getElementById('res-col-misses'); const resColFa = document.getElementById('res-col-fa'); const resAccuracy = document.getElementById('res-accuracy');
+    function showScreen(screenName) { Object.values(screens).forEach(s => { s.classList.add('hidden'); s.classList.remove('flex'); }); screens[screenName].classList.remove('hidden'); screens[screenName].classList.add('flex'); }
+    function generateSequence() { state.sequence = []; state.posTargets = 0; state.colTargets = 0; const totalCells = state.gridSize * state.gridSize; let mandatoryPosPool = Array.from({length: totalCells}, (_, i) => i); let mandatoryColPool = [...COLORS]; for (let i = mandatoryPosPool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [mandatoryPosPool[i], mandatoryPosPool[j]] = [mandatoryPosPool[j], mandatoryPosPool[i]]; } for (let i = mandatoryColPool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [mandatoryColPool[i], mandatoryColPool[j]] = [mandatoryColPool[j], mandatoryColPool[i]]; } function getGuaranteedRandom(pool, mandatoryPool, excludeValue) { let chosen; const validMandatoryIdx = mandatoryPool.findIndex(v => v !== excludeValue); if (validMandatoryIdx !== -1) { chosen = mandatoryPool[validMandatoryIdx]; mandatoryPool.splice(validMandatoryIdx, 1); } else { do { chosen = pool[Math.floor(Math.random() * pool.length)]; } while (chosen === excludeValue); } return chosen; } const validIndices = []; for (let i = state.nBack; i < state.totalRounds; i++) validIndices.push(i); for (let i = validIndices.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [validIndices[i], validIndices[j]] = [validIndices[j], validIndices[i]]; } const targetMatchCount = Math.max(Math.ceil(state.totalRounds * 0.35), 1); const actualMatchCount = Math.min(targetMatchCount, validIndices.length); const matchSet = new Set(validIndices.slice(0, actualMatchCount)); const allPositions = Array.from({length: totalCells}, (_, i) => i); for (let i = 0; i < state.totalRounds; i++) { if (i < state.nBack) { const initPos = getGuaranteedRandom(allPositions, mandatoryPosPool, -1); const initCol = getGuaranteedRandom(COLORS, mandatoryColPool, null); state.sequence.push({ position: initPos, color: initCol, isPosMatch: false, isColMatch: false, userPos: false, userCol: false }); } else { let isPosMatch = false; let isColMatch = false; if (matchSet.has(i)) { const rand = Math.random(); if (rand < 0.425) isPosMatch = true; else if (rand < 0.85) isColMatch = true; else { isPosMatch = true; isColMatch = true; } } let pos; if (isPosMatch) { pos = state.sequence[i - state.nBack].position; const mIdx = mandatoryPosPool.indexOf(pos); if (mIdx !== -1) mandatoryPosPool.splice(mIdx, 1); state.posTargets++; } else { const excludePos = state.sequence[i - state.nBack].position; pos = getGuaranteedRandom(allPositions, mandatoryPosPool, excludePos); } let col; if (isColMatch) { col = state.sequence[i - state.nBack].color; const mIdx = mandatoryColPool.indexOf(col); if (mIdx !== -1) mandatoryColPool.splice(mIdx, 1); state.colTargets++; } else { const excludeCol = state.sequence[i - state.nBack].color; col = getGuaranteedRandom(COLORS, mandatoryColPool, excludeCol); } state.sequence.push({ position: pos, color: col, isPosMatch, isColMatch, userPos: false, userCol: false }); } } }
+    function generateGrid() { gridContainer.innerHTML = ''; gridContainer.style.gridTemplateColumns = `repeat(${state.gridSize}, minmax(0, 1fr))`; let gap = '12px'; if (state.gridSize >= 4) gap = '8px'; if (state.gridSize >= 6) gap = '6px'; if (state.gridSize >= 8) gap = '4px'; gridContainer.style.gap = gap; cells = []; const totalCells = state.gridSize * state.gridSize; let radiusClass = 'rounded-[24px]'; if (state.gridSize === 4) radiusClass = 'rounded-[20px]'; if (state.gridSize === 5) radiusClass = 'rounded-[16px]'; if (state.gridSize >= 6) radiusClass = 'rounded-[12px]'; if (state.gridSize >= 8) radiusClass = 'rounded-[8px]'; for (let i = 0; i < totalCells; i++) { const div = document.createElement('div'); div.className = `grid-cell w-full aspect-square ${radiusClass}`; div.id = `cell-${i}`; gridContainer.appendChild(div); cells.push(div); } }
+    function startGame() { state.nBack = selectedN; state.gridSize = selectedGrid; state.totalRounds = selectedRounds; state.currentRound = 0; state.posHits = 0; state.posMisses = 0; state.posFalseAlarms = 0; state.colHits = 0; state.colMisses = 0; state.colFalseAlarms = 0; state.isPlaying = true; generateGrid(); generateSequence(); currentNDisplay.textContent = state.nBack; roundsLeftDisplay.textContent = state.totalRounds; showScreen('game'); setTimeout(() => { startRound(); }, 1000); }
+    function startRound() { if (state.currentRound >= state.totalRounds) { endGame(); return; } state.posRespondedThisRound = false; state.colRespondedThisRound = false; const currentItem = state.sequence[state.currentRound]; const cell = cells[currentItem.position]; cell.classList.add(`active-${currentItem.color}`); state.roundStartTime = performance.now(); function gameLoop(timestamp) { if (!state.isPlaying) return; const elapsed = timestamp - state.roundStartTime; const currentItem = state.sequence[state.currentRound]; const cell = cells[currentItem.position]; if (elapsed >= state.showDuration && cell.classList.contains(`active-${currentItem.color}`)) { cell.classList.remove(`active-${currentItem.color}`); roundsLeftDisplay.textContent = state.totalRounds - state.currentRound - 1; } if (elapsed >= state.showDuration + state.blankDuration) { if (state.currentRound >= state.nBack) { const nBackItem = state.sequence[state.currentRound - state.nBack]; if (currentItem.position === nBackItem.position && !state.posRespondedThisRound) state.posMisses++; if (currentItem.color === nBackItem.color && !state.colRespondedThisRound) state.colMisses++; } state.currentRound++; startRound(); return; } state.rafId = requestAnimationFrame(gameLoop); } state.rafId = requestAnimationFrame(gameLoop); }
+    function handleAction(type) { if (!state.isPlaying) return; const btn = type === 'position' ? matchPosBtn : matchColBtn; animateBtn(btn); const currentItem = state.sequence[state.currentRound]; if (type === 'position') { currentItem.userPos = true; if (state.posRespondedThisRound) { state.posFalseAlarms++; return; } state.posRespondedThisRound = true; } else { currentItem.userCol = true; if (state.colRespondedThisRound) { state.colFalseAlarms++; return; } state.colRespondedThisRound = true; } if (state.currentRound < state.nBack) { if (type === 'position') state.posFalseAlarms++; if (type === 'color') state.colFalseAlarms++; return; } const nBackItem = state.sequence[state.currentRound - state.nBack]; if (type === 'position') { if (currentItem.position === nBackItem.position) state.posHits++; else state.posFalseAlarms++; } else if (type === 'color') { if (currentItem.color === nBackItem.color) state.colHits++; else state.colFalseAlarms++; } }
+    function endGame() { state.isPlaying = false; if (state.rafId) { cancelAnimationFrame(state.rafId); state.rafId = null; } cells.forEach(cell => { COLORS.forEach(c => cell.classList.remove(`active-${c}`)); }); const totalTargets = state.posTargets + state.colTargets; const totalHits = state.posHits + state.colHits; const totalFA = state.posFalseAlarms + state.colFalseAlarms; let accuracy = 0; const base = totalTargets + totalFA; if (base > 0) accuracy = Math.round((totalHits / base) * 100); else accuracy = 100; resNBack.textContent = state.nBack; resGrid.textContent = state.gridSize; resRounds.textContent = state.totalRounds; resPosHits.textContent = state.posHits; resPosMisses.textContent = state.posMisses; resPosFa.textContent = state.posFalseAlarms; resColHits.textContent = state.colHits; resColMisses.textContent = state.colMisses; resColFa.textContent = state.colFalseAlarms; resAccuracy.textContent = `${accuracy}%`; showScreen('result'); }
+    let errorIndices = []; let currentErrorPos = -1;
+    function buildReviewScreen() { const list = document.getElementById('review-list'); list.innerHTML = ''; errorIndices = []; currentErrorPos = -1; const colorMap = { red: '#D94343', green: '#6BBA75', blue: '#5B88D1', yellow: '#F2C12E', purple: '#A470C4', orange: '#F57C00', cyan: '#4CB5AE', pink: '#D176A3', white: '#D4D4D6' }; state.sequence.forEach((item, index) => { const isInitial = index < state.nBack; const isError = (!isInitial) && ((item.isPosMatch !== item.userPos) || (item.isColMatch !== item.userCol)); if (isError) errorIndices.push(index); let errorDisplay = ''; if (isError) errorDisplay = '<span class="text-white text-lg tracking-wider">❌</span>'; let gridHTML = `<div class="grid gap-[2px] w-12 h-12 shrink-0" style="grid-template-columns: repeat(${state.gridSize}, 1fr);">`; const totalCells = state.gridSize * state.gridSize; for(let c = 0; c < totalCells; c++) { const cellBg = (c === item.position) ? colorMap[item.color] : 'rgba(255,255,255,0.05)'; gridHTML += `<div style="background-color: ${cellBg}; border-radius: 2px;"></div>`; } gridHTML += '</div>'; const el = document.createElement('div'); el.id = `review-item-${index}`; el.className = 'review-item-card flex items-center gap-4 p-4 rounded-2xl border transition-colors duration-300 border-white/[0.02] bg-[#2C2C2E]/50'; el.innerHTML = `<div class="text-white/30 font-mono text-sm w-6 text-right shrink-0">${index + 1}</div>${gridHTML}<div class="flex-1 flex flex-col items-end justify-center gap-1 text-base">${errorDisplay}</div>`; list.appendChild(el); }); const prevBtn = document.getElementById('prev-error-btn'); const nextBtn = document.getElementById('next-error-btn'); if (errorIndices.length > 0) { prevBtn.classList.remove('hidden'); nextBtn.classList.remove('hidden'); } else { prevBtn.classList.add('hidden'); nextBtn.classList.add('hidden'); } }
+    function updateReviewHighlight(targetIndex) { document.querySelectorAll('.review-item-card').forEach(el => { el.classList.remove('border-white/50', 'bg-white/[0.15]'); el.classList.add('border-white/[0.02]', 'bg-[#2C2C2E]/50'); }); const referenceIndex = targetIndex - state.nBack; const targetEl = document.getElementById(`review-item-${targetIndex}`); if (targetEl) { targetEl.classList.remove('border-white/[0.02]', 'bg-[#2C2C2E]/50'); targetEl.classList.add('border-white/50', 'bg-white/[0.15]'); } const refEl = document.getElementById(`review-item-${referenceIndex}`); if (refEl) { refEl.classList.remove('border-white/[0.02]', 'bg-[#2C2C2E]/50'); refEl.classList.add('border-white/50', 'bg-white/[0.15]'); } }
+    function jumpToError(direction, isInit = false) { if (errorIndices.length === 0) return; if (currentErrorPos === -1) currentErrorPos = direction > 0 ? 0 : errorIndices.length - 1; else if (!isInit) { currentErrorPos += direction; if (currentErrorPos >= errorIndices.length) currentErrorPos = 0; if (currentErrorPos < 0) currentErrorPos = errorIndices.length - 1; } const targetIndex = errorIndices[currentErrorPos]; updateReviewHighlight(targetIndex); const targetEl = document.getElementById(`review-item-${targetIndex}`); if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    function animateBtn(btn) { btn.classList.remove('animate-click'); void btn.offsetWidth; btn.classList.add('animate-click'); setTimeout(() => { btn.classList.remove('animate-click'); }, 200); }
+    function bindFastClick(btn, callback, delay = 0) { btn.addEventListener('pointerdown', (e) => { e.preventDefault(); animateBtn(btn); if (delay > 0) setTimeout(callback, delay); else callback(); }); }
+    bindFastClick(document.getElementById('start-btn'), startGame, 150); bindFastClick(document.getElementById('restart-btn'), () => showScreen('start'), 150); bindFastClick(document.getElementById('review-btn'), () => { buildReviewScreen(); showScreen('review'); }, 150); bindFastClick(document.getElementById('close-review-btn'), () => showScreen('result'), 150); bindFastClick(document.getElementById('prev-error-btn'), () => jumpToError(-1)); bindFastClick(document.getElementById('next-error-btn'), () => jumpToError(1)); bindFastClick(matchPosBtn, () => handleAction('position')); bindFastClick(matchColBtn, () => handleAction('color'));
+    document.addEventListener('keydown', (e) => { if (!state.isPlaying) return; const key = e.key.toLowerCase(); if (key === 'd') { e.preventDefault(); handleAction('position'); } else if (key === 'f') { e.preventDefault(); handleAction('color'); } });
+  </script>
+</body>
+</html>
